@@ -1,296 +1,39 @@
-# Basic Authentication in Spring Security (Without JWT)
-
-## What is Basic Authentication?
-
-Basic Authentication is one of the simplest authentication mechanisms supported by HTTP and Spring Security.
-
-With Basic Authentication:
-
-- The client sends the **username** and **password** with **every HTTP request**.
-- Spring Security verifies the credentials on every request.
-- No token (such as JWT) is generated or stored.
-- If the credentials are valid, the request is allowed.
-- If they are invalid, Spring Security returns **401 Unauthorized**.
-
-Unlike JWT authentication, the server does **not** issue a token after login. Every request must include the username and password.
-
----
-
-## Authentication Flow
-
-```text
-                Client
-                   |
-                   |  GET /api/v1/users
-                   |  Authorization: Basic base64(username:password)
-                   |
-                   v
-        Spring Security Filter Chain
-                   |
-                   v
-     BasicAuthenticationFilter
-                   |
-                   v
-     Decode Authorization Header
-                   |
-                   v
- username + password extracted
-                   |
-                   v
- AuthenticationManager
-                   |
-                   v
- DaoAuthenticationProvider
-                   |
-                   v
- CustomUserDetailsService
-                   |
-                   v
- Load User from Database
-                   |
-                   v
- PasswordEncoder.matches()
-                   |
-          ---------------------
-          |                   |
-      Password OK        Password Wrong
-          |                   |
-          v                   v
- Authentication      401 Unauthorized
- Successful
-          |
-          v
- Controller Executes
-```
-
----
-
-## Authorization Header
-
-The client sends the credentials in the HTTP Authorization header.
-
-```
-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=
-```
-
-The value after `Basic` is simply:
-
-```
-Base64(username:password)
-```
-
-Example:
-
-```
-username = john
-password = secret123
-```
-
-Becomes:
-
-```
-john:secret123
-```
-
-Base64 encoded:
-
-```
-am9objpzZWNyZXQxMjM=
-```
-
-Header:
-
-```
-Authorization: Basic am9objpzZWNyZXQxMjM=
-```
-
-> **Note:** Base64 is **not encryption**. It is only encoding. Always use **HTTPS** with Basic Authentication.
-
----
-
-## Spring Security Configuration
-
-```java
-@Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
-public class SecurityConfig {
-
-    private final CustomUserDetailsService userDetailsService;
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        http
-            .authorizeHttpRequests(auth -> auth
-
-                // Public APIs
-                .requestMatchers("/api/v1/auth/**").permitAll()
-
-                // All other APIs require authentication
-                .anyRequest().authenticated()
-            )
-
-            // Enable HTTP Basic Authentication
-            .httpBasic(Customizer.withDefaults())
-
-            // Disable CSRF for REST APIs
-            .csrf(AbstractHttpConfigurer::disable);
-
-        return http.build();
-    }
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    DaoAuthenticationProvider authenticationProvider() {
-
-        DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(userDetailsService);
-
-        provider.setPasswordEncoder(passwordEncoder());
-
-        return provider;
-    }
-
-    @Bean
-    AuthenticationManager authenticationManager() {
-        return new ProviderManager(authenticationProvider());
-    }
-}
-```
-
----
-
-## Public APIs
-
-Some endpoints can be accessed without authentication.
-
-```java
-.requestMatchers("/api/v1/auth/**").permitAll()
-```
-
-Examples:
-
-```
-POST /api/v1/auth/register
-
-POST /api/v1/auth/login
-
-GET /api/v1/auth/health
-```
-
-Anyone can call these APIs.
-
----
-
-## Protected APIs
-
-Every other endpoint requires authentication.
-
-```java
-.anyRequest().authenticated()
-```
-
-Examples:
-
-```
-GET /api/v1/users
-
-POST /api/v1/orders
-
-PUT /api/v1/profile
-
-DELETE /api/v1/admin/users
-```
-
-These requests must include the Authorization header.
-
----
-
-## Example Request
-
-Without authentication:
-
-```http
-GET /api/v1/users
-```
-
-Response:
-
-```
-401 Unauthorized
-```
-
-With authentication:
-
-```http
-GET /api/v1/users
-
-Authorization: Basic am9objpzZWNyZXQxMjM=
-```
-
-Response:
-
-```
-200 OK
-```
-
----
-
-## Authentication Process
-
-For every request:
-
-1. Client sends username and password.
-2. Spring Security reads the Authorization header.
-3. Credentials are decoded.
-4. `AuthenticationManager` is called.
-5. `DaoAuthenticationProvider` authenticates the user.
-6. `CustomUserDetailsService` loads the user from the database.
-7. Password is compared using `PasswordEncoder`.
-8. If valid, the request proceeds.
-9. If invalid, a **401 Unauthorized** response is returned.
-
-Since there is no JWT or session involved, this process is repeated for **every request**.
-
----
-
-## Difference Between Basic Authentication and JWT
-
-| Basic Authentication | JWT Authentication |
-|----------------------|-------------------|
-| Username/password sent with every request | JWT token sent with every request |
-| No login token generated | Login generates a JWT |
-| Server verifies username/password every request | Server verifies JWT signature |
-| Database is typically accessed on every request | Database access can often be avoided after login |
-| Simpler to implement | More scalable for distributed systems |
-| Requires HTTPS because credentials are repeatedly transmitted | Requires HTTPS because the token grants access |
-
----
-
-## Advantages
-
-- Very easy to configure.
-- Built into HTTP.
-- Supported by browsers and tools like Postman.
-- No token management.
-- Good for internal services or development.
-
----
-
-## Disadvantages
-
-- Username and password are transmitted with every request.
-- Requires HTTPS to protect credentials.
-- Less efficient because authentication is performed on every request.
-- Not suitable for most public production APIs where token-based authentication (such as JWT or OAuth2) is preferred.
-
----
-
-## Summary
-
-Basic Authentication is a simple authentication mechanism where the client includes the username and password in the `Authorization` header on every request. Spring Security validates these credentials for each request using an `AuthenticationManager`, `DaoAuthenticationProvider`, `UserDetailsService`, and `PasswordEncoder`. Public endpoints can be excluded from authentication using `requestMatchers(...).permitAll()`, while protected endpoints require valid credentials via `.anyRequest().authenticated()`.
+# What is JWT Authentication?
+
+JWT (JSON Web Token) Authentication is a stateless authentication mechanism used to securely identify users in web applications and REST APIs. Unlike Basic Authentication, where the username and password are sent with every request, JWT authentication requires the user to log in only once. After successful authentication, the server generates a JWT token, which is returned to the client.
+
+The client stores this token (typically in memory or secure storage) and includes it in the Authorization header of every subsequent request.
+
+``
+Authorization: Bearer <JWT_TOKEN>
+``
+
+A JWT consists of three parts:
+
+- Header – Contains the token type and signing algorithm.
+- Payload – Contains user information (claims), such as username, roles, and expiration time.
+- Signature – Ensures the token has not been modified and verifies that it was issued by the trusted server.
+
+Since the server validates the token instead of maintaining user sessions, JWT authentication is stateless, making it well suited for REST APIs and microservice architectures.
+
+![jwt_auth_spring_security.png](src/main/resources/static.images/jwt_auth_spring_security.png)
+
+# JWT Authentication Flow
+## Phase 1: JWT Token Generation (Login)
+1. The client sends a login request containing the username and password.
+2. The request passes through the Spring Security filter chain.
+3. The AuthenticationManager delegates authentication to the appropriate AuthenticationProvider.
+4. The UserDetailsService retrieves the user's information from the database or another user store.
+5. The PasswordEncoder verifies the submitted password against the stored encoded password.
+6. If authentication succeeds, the AuthenticationManager returns an authenticated user.
+7. The authentication request reaches the AuthController.
+8. The AuthController calls the JWT Utility to generate a signed JWT containing user information and an expiration time.
+9. The generated JWT is returned to the client, which stores it for future requests.
+
+## Phase 2: Request with a Valid JWT Token
+1. The client sends a request to a protected endpoint with the JWT in the Authorization: Bearer <JWT_TOKEN> header.
+2. The request passes through the Spring Security filter chain, where the JWT Authentication Filter extracts the token.
+3. The JWT Utility validates the token by verifying its signature, parsing its claims, and checking whether it has expired.
+4. If the token is valid, Spring Security creates an authenticated Authentication object and stores it in the SecurityContext.
+5. The authenticated request proceeds to the controller, and the requested resource is returned with a successful response.
+6. If the token is invalid, expired, or missing, Spring Security rejects the request and returns a 401 Unauthorized response.
