@@ -1,4 +1,4 @@
-package com.example.spring_security.dto.request;
+package com.example.spring_security.library.api.v1.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;

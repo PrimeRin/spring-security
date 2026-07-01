@@ -1,9 +1,9 @@
-package com.example.spring_security.controller;
+package com.example.spring_security.auth.api.v1.controller;
 
-import com.example.spring_security.dto.LoginRequest;
-import com.example.spring_security.dto.RegisterRequest;
-import com.example.spring_security.entity.User;
-import com.example.spring_security.repository.UserRepository;
+import com.example.spring_security.auth.api.v1.dto.request.LoginRequest;
+import com.example.spring_security.auth.api.v1.dto.request.RegisterRequest;
+import com.example.spring_security.auth.api.v1.entity.User;
+import com.example.spring_security.auth.api.v1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

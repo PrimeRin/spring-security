@@ -1,4 +1,4 @@
-package com.example.spring_security.dto.response;
+package com.example.spring_security.library.api.v1.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,10 +1,10 @@
-package com.example.spring_security.service;
+package com.example.spring_security.library.api.v1.service;
 
-import com.example.spring_security.dto.request.BookRequest;
-import com.example.spring_security.dto.response.BookResponse;
-import com.example.spring_security.entity.Book;
-import com.example.spring_security.exception.ResourceNotFoundException;
-import com.example.spring_security.repository.BookRepository;
+import com.example.spring_security.library.api.v1.dto.request.BookRequest;
+import com.example.spring_security.library.api.v1.dto.response.BookResponse;
+import com.example.spring_security.library.api.v1.entity.Book;
+import com.example.spring_security.common.exception.ResourceNotFoundException;
+import com.example.spring_security.library.api.v1.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;

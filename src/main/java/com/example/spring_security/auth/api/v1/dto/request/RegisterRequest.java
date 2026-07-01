@@ -1,4 +1,4 @@
-package com.example.spring_security.dto;
+package com.example.spring_security.auth.api.v1.dto.request;
 
 import lombok.Data;
 

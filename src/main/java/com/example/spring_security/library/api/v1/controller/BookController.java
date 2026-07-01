@@ -1,8 +1,8 @@
-package com.example.spring_security.controller;
+package com.example.spring_security.library.api.v1.controller;
 
-import com.example.spring_security.dto.request.BookRequest;
-import com.example.spring_security.dto.response.BookResponse;
-import com.example.spring_security.service.BookService;
+import com.example.spring_security.library.api.v1.dto.request.BookRequest;
+import com.example.spring_security.library.api.v1.dto.response.BookResponse;
+import com.example.spring_security.library.api.v1.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/books")
+@RequestMapping("/api/v1/books")
 @RequiredArgsConstructor
 public class BookController {
 

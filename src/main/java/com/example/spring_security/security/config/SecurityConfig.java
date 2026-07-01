@@ -1,6 +1,6 @@
-package com.example.spring_security.config;
+package com.example.spring_security.security.config;
 
-import com.example.spring_security.service.CustomUserDetailsService;
+import com.example.spring_security.auth.api.v1.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,8 +25,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/**").permitAll()  // Public endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")  // Admin only
+                        .requestMatchers("/api/v1/auth/**").permitAll()  // Public endpoints
                         .anyRequest().authenticated()  // All other endpoints need authentication
                 )
                 .httpBasic(withDefaults())

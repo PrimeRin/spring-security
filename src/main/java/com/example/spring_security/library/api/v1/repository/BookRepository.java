@@ -1,9 +1,8 @@
-package com.example.spring_security.repository;
+package com.example.spring_security.library.api.v1.repository;
 
-import com.example.spring_security.entity.Book;
+import com.example.spring_security.library.api.v1.entity.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

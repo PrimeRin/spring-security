@@ -1,4 +1,4 @@
-package com.example.spring_security.entity;
+package com.example.spring_security.library.api.v1.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
-package com.example.spring_security.service;
+package com.example.spring_security.auth.api.v1.service;
 
-import com.example.spring_security.repository.UserRepository;
+import com.example.spring_security.auth.api.v1.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
