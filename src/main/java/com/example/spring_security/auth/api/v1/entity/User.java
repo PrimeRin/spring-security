@@ -1,4 +1,3 @@
-// User.java
 package com.example.spring_security.auth.api.v1.entity;
 
 import jakarta.persistence.*;
@@ -47,19 +46,15 @@ public class User implements UserDetails {
     @Column(name = "credentials_non_expired", nullable = false)
     private boolean credentialsNonExpired = true;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private Role role;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
@@ -74,9 +69,22 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                .collect(Collectors.toList());
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        if (role != null) {
+            authorities.add(new SimpleGrantedAuthority(role.getName().name()));
+
+            // Add permissions as authorities
+            if (role.getPermissions() != null) {
+                authorities.addAll(
+                        role.getPermissions().stream()
+                                .map(permission -> new SimpleGrantedAuthority(permission.getName().name()))
+                                .collect(Collectors.toSet())
+                );
+            }
+        }
+
+        return authorities;
     }
 
     @Override

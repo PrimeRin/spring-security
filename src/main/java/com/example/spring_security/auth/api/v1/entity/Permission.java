@@ -1,3 +1,4 @@
+// Permission.java
 package com.example.spring_security.auth.api.v1.entity;
 
 import jakarta.persistence.*;
@@ -6,15 +7,13 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
-@Table(name = "roles")
+@Table(name = "permissions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+public class Permission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,18 +21,10 @@ public class Role {
 
     @Column(unique = true, nullable = false)
     @Enumerated(EnumType.STRING)
-    private RoleName name;
+    private PermissionName name;
 
     @Column(name = "description")
     private String description;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "role_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    private Set<Permission> permissions = new HashSet<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
