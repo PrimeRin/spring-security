@@ -21,3 +21,7 @@ spring:
     level:
       org.flywaydb: DEBUG
       org.springframework.boot.autoconfigure.flyway: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
