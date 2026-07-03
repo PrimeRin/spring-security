@@ -4,6 +4,7 @@ import com.example.spring_security.library.api.v1.dto.request.BookRequest;
 import com.example.spring_security.library.api.v1.dto.response.BookResponse;
 import com.example.spring_security.library.api.v1.entity.Book;
 import com.example.spring_security.common.exception.ResourceNotFoundException;
+import com.example.spring_security.library.api.v1.mapper.BookMapper;
 import com.example.spring_security.library.api.v1.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,46 +22,32 @@ import java.util.stream.Collectors;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final BookMapper bookMapper;
 
     @Transactional
     public BookResponse createBook(BookRequest request) {
-        // Check if ISBN already exists
-        if (bookRepository.existsByIsbn(request.getIsbn())) {
-            throw new RuntimeException("Book with ISBN " + request.getIsbn() + " already exists");
-        }
+        validateIsbnUniqueness(request.getIsbn(), null);
 
-        // Get current authenticated username
         String currentUsername = getCurrentUsername();
 
-        Book book = new Book();
-        book.setTitle(request.getTitle());
-        book.setAuthor(request.getAuthor());
-        book.setIsbn(request.getIsbn());
-        book.setPublishedYear(request.getPublishedYear());
-        book.setGenre(request.getGenre());
-        book.setDescription(request.getDescription());
-        book.setPrice(request.getPrice());
-        book.setStockQuantity(request.getStockQuantity());
+        Book book = bookMapper.toEntity(request);
         book.setCreatedBy(currentUsername);
+        book.setCreatedAt(LocalDateTime.now());
+        book.setUpdatedAt(LocalDateTime.now());
 
         Book savedBook = bookRepository.save(book);
-        log.info("Book created: {} by {}", savedBook.getTitle(), currentUsername);
-
-        return convertToResponse(savedBook);
+        return bookMapper.toResponse(savedBook);
     }
 
     @Transactional(readOnly = true)
     public List<BookResponse> getAllBooks() {
-        return bookRepository.findAll().stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        return bookMapper.toResponseList(bookRepository.findAll());
     }
 
     @Transactional(readOnly = true)
     public BookResponse getBookById(Long id) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
-        return convertToResponse(book);
+        Book book = findBookById(id);
+        return bookMapper.toResponse(book);
     }
 
     @Transactional(readOnly = true)
@@ -77,71 +64,54 @@ public class BookService {
             books = bookRepository.findAll();
         }
 
-        return books.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        return bookMapper.toResponseList(books);
     }
 
     @Transactional
     public BookResponse updateBook(Long id, BookRequest request) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
+        Book book = findBookById(id);
 
-        // Update only fields that are provided (not null)
-        if (request.getTitle() != null) book.setTitle(request.getTitle());
-        if (request.getAuthor() != null) book.setAuthor(request.getAuthor());
-        if (request.getIsbn() != null) {
-            // Check if new ISBN conflicts with another book
-            if (!book.getIsbn().equals(request.getIsbn()) &&
-                    bookRepository.existsByIsbn(request.getIsbn())) {
-                throw new RuntimeException("Book with ISBN " + request.getIsbn() + " already exists");
-            }
+        if (request.getIsbn() != null && !book.getIsbn().equals(request.getIsbn())) {
+            validateIsbnUniqueness(request.getIsbn(), id);
             book.setIsbn(request.getIsbn());
         }
-        if (request.getPublishedYear() != null) book.setPublishedYear(request.getPublishedYear());
-        if (request.getGenre() != null) book.setGenre(request.getGenre());
-        if (request.getDescription() != null) book.setDescription(request.getDescription());
-        if (request.getPrice() != null) book.setPrice(request.getPrice());
-        if (request.getStockQuantity() != null) book.setStockQuantity(request.getStockQuantity());
+
+        bookMapper.updateEntity(book, request);
+        book.setUpdatedAt(LocalDateTime.now());
 
         Book updatedBook = bookRepository.save(book);
-        log.info("Book updated: {} by {}", updatedBook.getTitle(), getCurrentUsername());
-
-        return convertToResponse(updatedBook);
+        return bookMapper.toResponse(updatedBook);
     }
 
     @Transactional
     public void deleteBook(Long id) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
-
+        Book book = findBookById(id);
         bookRepository.delete(book);
-        log.info("Book deleted: {} by {}", book.getTitle(), getCurrentUsername());
     }
 
-    // Helper methods
+    private void validateIsbnUniqueness(String isbn, Long excludeBookId) {
+        if (bookRepository.existsByIsbn(isbn)) {
+            if (excludeBookId != null) {
+                Optional<Book> existingBook = bookRepository.findByIsbn(isbn);
+                if (existingBook.isPresent() && !existingBook.get().getId().equals(excludeBookId)) {
+                    throw new RuntimeException("Book with ISBN " + isbn + " already exists");
+                }
+            } else {
+                throw new RuntimeException("Book with ISBN " + isbn + " already exists");
+            }
+        }
+    }
+
+    private Book findBookById(Long id) {
+        return bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
+    }
+
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return "anonymous";
         }
         return authentication.getName();
-    }
-
-    private BookResponse convertToResponse(Book book) {
-        return BookResponse.builder()
-                .id(book.getId())
-                .title(book.getTitle())
-                .author(book.getAuthor())
-                .isbn(book.getIsbn())
-                .publishedYear(book.getPublishedYear())
-                .genre(book.getGenre())
-                .description(book.getDescription())
-                .price(book.getPrice())
-                .stockQuantity(book.getStockQuantity())
-                .createdBy(book.getCreatedBy())
-                .createdAt(book.getCreatedAt())
-                .updatedAt(book.getUpdatedAt())
-                .build();
     }
 }
