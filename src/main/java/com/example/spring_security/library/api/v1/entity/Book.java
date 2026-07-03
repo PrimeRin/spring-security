@@ -2,6 +2,7 @@ package com.example.spring_security.library.api.v1.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "books")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Book {
