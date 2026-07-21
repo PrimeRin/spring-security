@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/spring_security_test
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 5
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Changed from 'update' to 'create-drop'
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  flyway:
+    enabled: false  # Disable Flyway for tests
+
+  # Disable security for tests if needed
+  security:
+    basic:
+      enabled: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.transaction: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.boot.test: DEBUG
+    com.zaxxer.hikari: DEBUG
+
+jwt:
+  secret: testJwtSecretKeyForTestingPurposesOnly1234567890
+  expiration: 3600000
